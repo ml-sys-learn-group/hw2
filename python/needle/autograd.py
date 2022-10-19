@@ -1,6 +1,6 @@
 """Core data structures."""
 import needle
-from typing import List, Optional, NamedTuple, Tuple, Union
+from typing import List, Optional, NamedTuple, Tuple, Union, Dict
 from collections import namedtuple
 import numpy
 from needle import init
@@ -365,7 +365,10 @@ class Tensor(Value):
 
     def __pow__(self, other):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        if isinstance(other, Tensor):
+            raise NotImplementedError()
+        else:
+            return needle.ops.PowerScalar(other)(self)
         ### END YOUR SOLUTION
 
     def __sub__(self, other):
@@ -423,8 +426,31 @@ def compute_gradient_of_variables(output_tensor, out_grad):
     reverse_topo_order = list(reversed(find_topo_sort([output_tensor])))
 
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    for node in reverse_topo_order:
+        output_grads = node_to_output_grads_list[node]
+        node_grad = sum_node_list(output_grads)
+        node.grad = node_grad
+
+        input_nodes = node.inputs
+        if input_nodes is None or len(input_nodes) == 0:
+            continue
+
+        node_op = node.op
+        back_grads = make_list(node_op.gradient(node_grad, node))
+        for input_node, back_grad in zip(input_nodes, back_grads):
+            if input_node not in node_to_output_grads_list:
+                node_to_output_grads_list[input_node] = []
+            node_to_output_grads_list[input_node].append(back_grad)
     ### END YOUR SOLUTION
+
+
+def make_list(item):
+    """
+    """
+    try:
+        return list(item)
+    except TypeError as error:
+        return [item]
 
 
 def find_topo_sort(node_list: List[Value]) -> List[Value]:
@@ -436,14 +462,30 @@ def find_topo_sort(node_list: List[Value]) -> List[Value]:
     sort.
     """
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    visited_nodes = set([])
+    topo_order = []
+    for node in node_list:
+        topo_sort_dfs(node, visited_nodes, topo_order)
+    return topo_order
     ### END YOUR SOLUTION
 
 
 def topo_sort_dfs(node, visited, topo_order):
     """Post-order DFS"""
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    if node.inputs is None or len(node.inputs) == 0:
+        if node not in visited:
+            topo_order.append(node)
+            visited.add(node)
+    else:
+        for input_node in node.inputs:
+            if input_node in visited:
+                continue
+            topo_sort_dfs(input_node, visited, topo_order)
+
+        if node not in visited:
+            topo_order.append(node)
+            visited.add(node)
     ### END YOUR SOLUTION
 
 

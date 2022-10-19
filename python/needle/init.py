@@ -49,25 +49,47 @@ def one_hot(n, i, device=None, dtype="float32", requires_grad=False):
 
 def xavier_uniform(fan_in, fan_out, gain=1.0, **kwargs):
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    alpha = gain * math.sqrt(6/(fan_in + fan_out))
+    kwargs["low"] = -alpha
+    kwargs["high"] = alpha
+    return rand(fan_in, fan_out, **kwargs)
     ### END YOUR SOLUTION
 
 
 def xavier_normal(fan_in, fan_out, gain=1.0, **kwargs):
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    std = gain * math.sqrt(2/(fan_in + fan_out))
+    kwargs["mean"] = 0.0
+    kwargs["std"] = std
+    return randn(fan_in, fan_out, **kwargs)
     ### END YOUR SOLUTION
 
 
 def kaiming_uniform(fan_in, fan_out, nonlinearity="relu", **kwargs):
     assert nonlinearity == "relu", "Only relu supported currently"
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    if nonlinearity == 'relu':
+        gain = math.sqrt(2)
+    else:
+        # support other activation gain
+        gain = math.sqrt(2)
+    bound = gain * math.sqrt(3/fan_in)
+    kwargs["low"] = -bound
+    kwargs["high"] = bound
+    return rand(fan_in, fan_out, **kwargs)
     ### END YOUR SOLUTION
 
 
 def kaiming_normal(fan_in, fan_out, nonlinearity="relu", **kwargs):
     assert nonlinearity == "relu", "Only relu supported currently"
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    if nonlinearity == 'relu':
+        gain = math.sqrt(2)
+    else:
+        # support other activation gain
+        gain = math.sqrt(2)
+    std = gain/math.sqrt(fan_in)
+    kwargs["mean"] = 0.0
+    kwargs["std"] = std
+    return randn(fan_in, fan_out, **kwargs)
     ### END YOUR SOLUTION
