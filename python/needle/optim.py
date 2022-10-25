@@ -25,7 +25,10 @@ class SGD(Optimizer):
 
     def step(self):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        for w in self.params:
+            w_u = (self.momentum * self.u.get(w, 0) + (1 - self.momentum) * (w.grad + self.weight_decay*w.data)).data
+            self.u[w] = w_u
+            w.data = w.data + (-self.lr) * w_u
         ### END YOUR SOLUTION
 
 
@@ -52,5 +55,23 @@ class Adam(Optimizer):
 
     def step(self):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # TODO: optimize tensor num
+        self.t += 1
+        for w in self.params:
+            grad = w.grad.data
+            if self.weight_decay > 0.0:
+                grad = grad + self.weight_decay*w.data
+            w_m = (self.beta1 * self.m.get(w, 0) + (1 - self.beta1) * grad).data
+            self.m[w] = w_m
+            w_v = (self.beta2 * self.v.get(w, 0) + (1 - self.beta2) * (grad ** 2)).data
+            self.v[w] = w_v
+            
+            # add bias correction
+            cor_w_m = w_m/(1-self.beta1**self.t)
+            cor_w_v = w_v/(1-self.beta2**self.t)
+            
+            # update weight
+            w.data = w.data + (-self.lr)* (cor_w_m/(cor_w_v**0.5 + self.eps)).data
+            
+            
         ### END YOUR SOLUTION

@@ -72,7 +72,7 @@ def softmax_loss(Z, y_one_hot):
     z_softmax = z_exp/ndl.broadcast_to(z_sum, z_exp.shape)
     z_pos = z_softmax * y_one_hot
     loss = -ndl.log(ndl.summation(z_pos, axes=1))
-    mean_loss = ndl.summation(loss)/Z.shape[0]
+    mean_loss = ndl.summation(loss / Z.shape[0])
     return mean_loss
     ### END YOUR SOLUTION
 
@@ -110,9 +110,9 @@ def nn_epoch(X, y, W1, W2, lr=0.1, batch=100):
         x_batch, y_batch = get_batch(X, y, batch, i)
         x_tensor = ndl.Tensor(x_batch, requires_grad=False)
         logits = ndl.matmul(ndl.relu(ndl.matmul(x_tensor, W1)), W2)
-        y_one_hot = np.zeros((y_batch.shape[0], logits.shape[-1]))
+        y_one_hot = np.zeros((y_batch.shape[0], logits.shape[-1]), dtype=np.float32)
         y_one_hot[np.arange(y_batch.size), y_batch] = 1
-        y_tensor = ndl.Tensor(y_one_hot)
+        y_tensor = ndl.Tensor(y_one_hot, dtype=np.float32)
         loss = softmax_loss(logits, y_tensor)
         hist_loss += loss.numpy()
         loss.backward()
@@ -122,8 +122,8 @@ def nn_epoch(X, y, W1, W2, lr=0.1, batch=100):
             print("loss: ", hist_loss/(i+1))
 
         # apply gradient
-        W1 = (W1 - W1.grad * lr).data
-        W2 = (W2 - W2.grad * lr).data
+        W1.data = W1.data - lr * W1.grad
+        W2.data = W2.data - lr * W2.grad
 
     return W1, W2
     ### END YOUR SOLUTION
