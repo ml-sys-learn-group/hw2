@@ -90,11 +90,11 @@ class Linear(Module):
         self.out_features = out_features
 
         ### BEGIN YOUR SOLUTION
-        self.weight = init.kaiming_uniform(
-            fan_in=in_features, fan_out=out_features, device=device, dtype=dtype)
+        self.weight = Parameter(init.kaiming_uniform(
+            fan_in=in_features, fan_out=out_features, device=device, dtype=dtype))
         if bias:
-            self.bias = ops.transpose(init.kaiming_uniform(
-                fan_in=out_features, fan_out=1, device=device, dtype=dtype), (0 , 1))
+            self.bias = Parameter(ops.transpose(init.kaiming_uniform(
+                fan_in=out_features, fan_out=1, device=device, dtype=dtype), (0 , 1)))
         else:
             self.bias = None
         ### END YOUR SOLUTION
@@ -144,7 +144,7 @@ class SoftmaxLoss(Module):
         class_num = logits.shape[-1]
         y_onehot = init.one_hot(class_num, y)
         logit_y = ops.summation(logits * y_onehot, axes=1)
-        return ops.summation(ops.logsumexp(logits, axes=1) - logit_y)/logits.shape[0]
+        return ops.summation((ops.logsumexp(logits, axes=1) - logit_y)/logits.shape[0])
         ### END YOUR SOLUTION
 
 
@@ -156,8 +156,8 @@ class BatchNorm1d(Module):
         self.eps = eps
         self.momentum = momentum
         ### BEGIN YOUR SOLUTION
-        self.weight = init.ones(1, dim, device=device, dtype=dtype)
-        self.bias = init.zeros(1, dim, device=device, dtype=dtype)
+        self.weight = Parameter(init.ones(1, dim, device=device, dtype=dtype))
+        self.bias = Parameter(init.zeros(1, dim, device=device, dtype=dtype))
         self.running_mean = init.zeros(dim, device=device, dtype=dtype)
         self.running_var = init.ones(dim, device=device, dtype=dtype)
         ### END YOUR SOLUTION
@@ -197,8 +197,8 @@ class LayerNorm1d(Module):
         self.dim = dim
         self.eps = eps
         ### BEGIN YOUR SOLUTION
-        self.w = init.ones(1, dim, device=device, dtype=dtype)
-        self.b = init.zeros(1, dim, device=device, dtype=dtype)
+        self.w = Parameter(init.ones(1, dim, device=device, dtype=dtype))
+        self.b = Parameter(init.zeros(1, dim, device=device, dtype=dtype))
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
@@ -225,8 +225,9 @@ class Dropout(Module):
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
         if self.training:
-            mask = init.randb(*x.shape, p=self.p)
-            return x * mask
+            p = 1.0 - self.p
+            mask = init.randb(*x.shape, p=p)
+            return x * mask / p
         else:
             # do not dropout anything when training flag is False
             return x
@@ -240,7 +241,7 @@ class Residual(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return self.fn(x) + x
         ### END YOUR SOLUTION
 
 

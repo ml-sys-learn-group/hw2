@@ -456,7 +456,7 @@ def test_nn_epoch_ndl():
     W1 = ndl.Tensor(W1)
     W2 = ndl.Tensor(W2)
     X_ = ndl.Tensor(X)
-    y_one_hot = np.zeros((y.shape[0], 3))
+    y_one_hot = np.zeros((y.shape[0], 3), dtype=np.float32)
     y_one_hot[np.arange(y.size), y] = 1
     y_ = ndl.Tensor(y_one_hot)
     dW1 = nd.Gradient(lambda W1_ :
@@ -483,5 +483,4 @@ def test_nn_epoch_ndl():
 
 
 if __name__ == "__main__":
-    test_summation_backward()
-    test_softmax_loss_ndl()
+    test_nn_epoch_ndl()
