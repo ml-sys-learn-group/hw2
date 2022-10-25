@@ -1,7 +1,9 @@
 import numpy as np
+
+import needle
 from .autograd import Tensor
 
-from typing import Iterator, Optional, List, Sized, Union, Iterable, Any
+from typing import Iterator, Optional, List, Tuple
 import struct
 import gzip
 import random
@@ -117,14 +119,27 @@ class DataLoader:
     def __iter__(self):
         ### BEGIN YOUR SOLUTION
         if self.shuffle:
-            self.ordering = random.shuffle(self.ordering)
+            index_range = np.arange(len(self.dataset))
+            np.random.shuffle(index_range)
+            self.ordering = np.array_split(index_range,
+                                           range(self.batch_size, len(self.dataset), self.batch_size))
+
+        self.current_index = 0
         ### END YOUR SOLUTION
         return self
 
     def __next__(self):
         ### BEGIN YOUR SOLUTION
-        for batch in self.ordering:
-            yield batch
+        if self.current_index >= len(self.ordering):
+            raise StopIteration
+        else:
+            batch_ids = self.ordering[self.current_index]
+            self.current_index += 1
+            batch = self.dataset[batch_ids]
+            if not isinstance(batch, Tuple):
+                batch = (batch, )
+            result = tuple([trans_to_tensor(data) for data in batch])
+            return result
         ### END YOUR SOLUTION
 
 
@@ -137,20 +152,27 @@ class MNISTDataset(Dataset):
     ):
         ### BEGIN YOUR SOLUTION
         super().__init__(transforms)
-        x,y = parse_mnist(image_filename, label_filename)
+        x, y = parse_mnist(image_filename, label_filename)
         self.x = x
         self.y = y
         ### END YOUR SOLUTION
 
     def __getitem__(self, index) -> object:
         ### BEGIN YOUR SOLUTION
-        return (self.x[index], self.y[index])
+        item_x = self.x[index]
+        item_y = self.y[index]
+        if self.transforms:
+            trans_x = self.apply_transforms(item_x)
+        else:
+            trans_x = item_x
+        return trans_x, item_y
         ### END YOUR SOLUTION
 
     def __len__(self) -> int:
         ### BEGIN YOUR SOLUTION
         return self.x.shape[0]
         ### END YOUR SOLUTION
+
 
 class NDArrayDataset(Dataset):
     def __init__(self, *arrays):
@@ -162,6 +184,12 @@ class NDArrayDataset(Dataset):
     def __getitem__(self, i) -> object:
         return tuple([a[i] for a in self.arrays])
 
+
+def trans_to_tensor(x) -> needle.Tensor:
+    if isinstance(x, needle.Tensor):
+        return x
+    else:
+        return needle.Tensor(x)
 
 def parse_mnist(image_filesname, label_filename):
     """ Read an images and labels file in MNIST format.  See this page:
@@ -196,7 +224,7 @@ def parse_mnist(image_filesname, label_filename):
         magic, num, rows, cols = struct.unpack('>IIII',image_f.read(16))
         # sample num should be equal to label num
         assert num == n
-        images = np.fromstring(image_f.read(), dtype=np.uint8).reshape(num, rows*cols).astype(np.float32)
+        images = np.fromstring(image_f.read(), dtype=np.uint8).reshape(num, rows, cols, 1).astype(np.float32)
         # max = np.max(images)
         max = 255
         norm_images = images/max

@@ -50,9 +50,6 @@ def _child_modules(value: object) -> List["Module"]:
     else:
         return []
 
-
-
-
 class Module:
     def __init__(self):
         self.training = True

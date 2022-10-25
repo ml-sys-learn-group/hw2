@@ -149,7 +149,7 @@ def test_mnist_dataset():
     sample_labels = np.array([mnist_train_dataset[idx][1] for idx in [1,42,1000,2000,3000,4000,5000,5005]])
     compare_labels = np.array([0,7,0,5,9,7,7,8])
 
-    np.testing.assert_allclose(sample_norms, compare_against)
+    np.testing.assert_allclose(sample_norms, compare_against,  rtol=1e-5, atol=1e-5)
     np.testing.assert_allclose(sample_labels, compare_labels)
 
 
@@ -243,8 +243,8 @@ def test_dataloader_ndarray():
     batch_size = 10
     train_dataset = ndl.data.NDArrayDataset(np.arange(100,))
     train_dataloader = iter(ndl.data.DataLoader(dataset=train_dataset,
-                                                 batch_size=batch_size,
-                                                 shuffle=True))
+                                                batch_size=batch_size,
+                                                shuffle=True))
 
     elements = np.array([np.linalg.norm(next(train_dataloader)[0].numpy()) for _ in range(10)])
     np.testing.assert_allclose(elements, np.array([164.805946, 173.43875 , 169.841102, 189.050258, 195.880065, 206.387984, 209.909504, 185.776748, 145.948621, 160.252925]))
