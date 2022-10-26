@@ -424,6 +424,8 @@ def compute_gradient_of_variables(output_tensor, out_grad):
 
     # Traverse graph in reverse topological order given the output_node that we are taking gradient wrt.
     reverse_topo_order = list(reversed(find_topo_sort([output_tensor])))
+    node_size = len(reverse_topo_order)
+    # print(f"node size: {node_size}")
 
     ### BEGIN YOUR SOLUTION
     for node in reverse_topo_order:

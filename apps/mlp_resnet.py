@@ -29,10 +29,11 @@ def ResidualBlock(dim, hidden_dim, norm=nn.BatchNorm1d, drop_prob=0.1):
 
 def MLPResNet(dim, hidden_dim=100, num_blocks=3, num_classes=10, norm=nn.BatchNorm1d, drop_prob=0.1):
     ### BEGIN YOUR SOLUTION
-    ### first linear  (dim, hidden_dim)
-    seq_modules = [ nn.Flatten() ] # flatten the input data
+    # first linear  (dim, hidden_dim)
+    seq_modules = [nn.Flatten()]  # flatten the input data
     fir_linear = nn.Linear(dim, hidden_dim)
     seq_modules.append(fir_linear)
+    seq_modules.append(nn.ReLU())
     for i in range(num_blocks):
         residual_block = ResidualBlock(hidden_dim, hidden_dim//2, norm, drop_prob)
         seq_modules.append(residual_block)
@@ -54,23 +55,25 @@ def epoch(dataloader, model, opt=None):
         model.train()
     loss_func = nn.SoftmaxLoss()
     loss = 0.0
-    acc = 0.0
+    error = 0.0
     step = 0
     for x, y in dataloader:
         pred = model(x)
-        loss = loss_func(pred, y)
-        loss += loss.numpy()
-        acc += cal_acc(pred, y)
+        batch_loss = loss_func(pred, y)
+        loss += batch_loss.numpy().item()
+        error += (1.0 - cal_acc(pred, y))
         step += 1
 
         if opt:
-            loss.backward()
+            batch_loss.backward()
             opt.step()
+            opt.reset_grad()
 
     mean_loss = loss/step
-    mean_acc = acc/step
-    return mean_loss, mean_acc
+    mean_error = error/step
+    return mean_error, mean_loss
     ### END YOUR SOLUTION
+
 
 def cal_acc(pred, y):
     """
@@ -107,14 +110,12 @@ def train_mnist(batch_size=100, epochs=10, optimizer=ndl.optim.Adam,
     for i in range(epochs):
         print(f"epoch: {i}")
         # training
-        train_loss, train_acc = epoch(mnist_train_dataloader, model, opt)
-        print(f"train loss: {train_loss}, train acc: {train_acc}")
+        train_error, train_loss = epoch(mnist_train_dataloader, model, opt)
+        print(f"train loss: {train_loss}, train error: {train_error}")
 
         # evaluation
-        eval_loss, eval_acc = epoch(mnist_test_dataloader, model)
-        print(f"eval loss: {eval_loss}, eval acc: {eval_acc}")
-
-
+        eval_error, eval_loss = epoch(mnist_test_dataloader, model)
+        print(f"eval loss: {eval_loss}, eval error: {eval_error}")
 
 
     ### END YOUR SOLUTION
